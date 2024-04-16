@@ -1,3 +1,3 @@
-gcc -o webserver webserver.c
+gcc webserver.c status_codes.c -o webserver.exe
 
-./webserver <PORT: DEFAULT 8080>
+./webserver.exe

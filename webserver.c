@@ -11,11 +11,7 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
-
-void send_404_response(int socket_fd) {
-	char *msg = "404 Not Found\n";
-	send(socket_fd, (void*)msg, strlen(msg), 0);
-}
+#include "status_codes.h"
 
 int main(int argc, char **argv) {
 
@@ -90,7 +86,7 @@ int main(int argc, char **argv) {
 		// get file size of file to send
 		struct stat stat_buff;
 		stat(uri_start, &stat_buff);
-		printf("Response File Size: %ld\n", stat_buff.st_size);
+		printf("Response File Size: %ldbytes\n", stat_buff.st_size);
 
 		sendfile(cfd, opened_fd, 0, (ssize_t)stat_buff.st_size);
 		close(opened_fd);
