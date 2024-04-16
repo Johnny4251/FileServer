@@ -1,3 +1,11 @@
+/*
+ * Author: John Pertell
+ * Date  : 4.10.24
+ * Desc  : Simple minimalistic webserver for file
+ * 	   sharing over socket communication.
+*/
+
+
 #include <stdio.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -29,6 +37,7 @@ int main(int argc, char **argv) {
 		printf("Server is being hosted on default port %d\n", port);
 	}	
 
+	// file descriptors, for later..
 	int server_fd, client_fd;
 
 	// info struct
@@ -51,6 +60,7 @@ int main(int argc, char **argv) {
 		listen(server_fd, backlog);
 		client_fd = accept(server_fd, (struct sockaddr*)&sockaddr_info, &sockaddr_len);
 		printf("\n====================\n");
+		printf("REQUEST INFORMATION:\n");
 		if ( client_fd < 0) {
 			perror("Receive Error");
 			return -1;
@@ -72,10 +82,10 @@ int main(int argc, char **argv) {
 
 		
 		// GET /file.html ...
-		//size_t path_len = strlen(req_buff) + strlen(shared_dir);
 		char *uri_start = req_buff + 5;
 		char *uri_end = strchr(uri_start, ' ');
 		if (!uri_end) { // URL's are end delimitted by a space char
+			printf("Header has no delimitter\n");
 			send_404_response(client_fd);
 			close(client_fd);
 			continue;
@@ -84,6 +94,7 @@ int main(int argc, char **argv) {
 		
 		
 		// create file_path ptr and concat directory info
+		printf("RESPONSE INFORMATION:\n");
 		char* file_path = (char*) malloc(strlen(uri_start));
 		strcpy(file_path, shared_dir);	
 		strcat(file_path, uri_start);
@@ -91,7 +102,8 @@ int main(int argc, char **argv) {
 		
 		// open file
 		int opened_fd = open(file_path, O_RDONLY);
-		if ( opened_fd < 0) { 
+		if ( opened_fd < 0) {
+		        printf("File does not exist\n");	
 			send_404_response(client_fd);
 			close(client_fd);
 			free(file_path);
