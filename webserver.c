@@ -22,6 +22,9 @@ int main(int argc, char **argv) {
 	// first argument is optional
 	if (argc > 1) {
 		port = atoi(argv[1]);
+		printf("Server is being hosted on port%d\n", port);
+	} else {
+		printf("Server is being hosted on default port %d\n", port);
 	}	
 
 	int sfd, cfd;
@@ -39,7 +42,7 @@ int main(int argc, char **argv) {
 		return -1;
 	}
 	
-	printf("listening for requests...\n");
+	printf("waiting for requests...\n");
 	// listen for incoming connections
 	while(server_running) {
 		listen(sfd, backlog);
