@@ -19,10 +19,12 @@ int main(int argc, char **argv) {
 	int backlog = 5;
 	int port = 8080;
 
+	char *shared_dir = "resources/";
+
 	// first argument is optional
 	if (argc > 1) {
 		port = atoi(argv[1]);
-		printf("Server is being hosted on port%d\n", port);
+		printf("Server is being hosted on port %d\n", port);
 	} else {
 		printf("Server is being hosted on default port %d\n", port);
 	}	
@@ -67,7 +69,8 @@ int main(int argc, char **argv) {
 		}	
 
 		
-		// GET /file.html ....
+		// GET /file.html ...
+		size_t path_len = strlen(req_buff) + strlen(shared_dir);
 		char *uri_start = req_buff + 5;
 		char *uri_end = strchr(uri_start, ' ');
 		if (!uri_end) {
@@ -75,25 +78,32 @@ int main(int argc, char **argv) {
 			close(client_fd);
 			continue;
 		}
-		*uri_end = '\0'; // null terminate empty space		
-
+		*uri_end = '\0'; // null terminate empty space	
+		
+		// create file_path ptr and concat directory info
+		char* file_path = (char*) malloc(strlen(uri_start));
+		strcat(file_path, shared_dir);	
+		strcat(file_path, uri_start);
+		
 		// open file
-		int opened_fd = open(uri_start, O_RDONLY);
+		int opened_fd = open(file_path, O_RDONLY);
 		if ( opened_fd < 0) { 
 			send_404_response(client_fd);
 			close(client_fd);
+			free(file_path);
 			printf("====================\n");
 			continue;
 		}
-
+		
 		// get file size of file to send
 		struct stat stat_buff;
-		stat(uri_start, &stat_buff);
+		stat(file_path, &stat_buff);
 		printf("Response File Size: %ldbytes\n", stat_buff.st_size);
 
 		sendfile(client_fd, opened_fd, 0, (ssize_t)stat_buff.st_size);
 		close(opened_fd);
 		close(client_fd);
+		free(file_path);
 
 		printf("====================\n");
 		
