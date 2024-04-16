@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 		printf("Server is being hosted on default port %d\n", port);
 	}	
 
-	int sfd, cfd;
+	int server_fd, client_fd;
 
 	// info struct
 	struct sockaddr_in sockaddr_info = {0};
@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
 	socklen_t sockaddr_len = sizeof(sockaddr_info);
 
 	// create fd -> bind
-	sfd = socket(AF_INET, SOCK_STREAM, 0);
-	if ( 0 > bind(sfd, (struct sockaddr*)&sockaddr_info, sockaddr_len) ){
+	server_fd = socket(AF_INET, SOCK_STREAM, 0);
+	if ( bind(server_fd, (struct sockaddr*)&sockaddr_info, sockaddr_len) < 0){
 		perror("Bind Failed");
 		return -1;
 	}
@@ -45,24 +45,24 @@ int main(int argc, char **argv) {
 	printf("waiting for requests...\n");
 	// listen for incoming connections
 	while(server_running) {
-		listen(sfd, backlog);
-		cfd = accept(sfd, (struct sockaddr*)&sockaddr_info, &sockaddr_len);
+		listen(server_fd, backlog);
+		client_fd = accept(server_fd, (struct sockaddr*)&sockaddr_info, &sockaddr_len);
 		printf("\n====================\n");
-		if ( 0 > cfd) {
+		if ( client_fd < 0) {
 			perror("Receive Error");
 			return -1;
 		}
 
 		// get request from user
 		char req_buff[256] = {0};
-		ssize_t recvd = recv(cfd, (void*)req_buff, sizeof(req_buff), 0);
+		ssize_t recvd = recv(client_fd, (void*)req_buff, sizeof(req_buff), 0);
 		printf("%s", req_buff);
 
 		
 		// atm GET is the only supported header
 		if (strncmp(req_buff, "GET ", 4) != 0) {
-			send_404_response(cfd);
-			close(cfd);
+			send_404_response(client_fd);
+			close(client_fd);
 			continue;
 		}	
 
@@ -71,17 +71,17 @@ int main(int argc, char **argv) {
 		char *uri_start = req_buff + 5;
 		char *uri_end = strchr(uri_start, ' ');
 		if (!uri_end) {
-			send_404_response(cfd);
-			close(cfd);
+			send_404_response(client_fd);
+			close(client_fd);
 			continue;
 		}
 		*uri_end = '\0'; // null terminate empty space		
 
 		// open file
 		int opened_fd = open(uri_start, O_RDONLY);
-		if ( 0 > opened_fd) { 
-			send_404_response(cfd);
-			close(cfd);
+		if ( opened_fd < 0) { 
+			send_404_response(client_fd);
+			close(client_fd);
 			printf("====================\n");
 			continue;
 		}
@@ -91,16 +91,16 @@ int main(int argc, char **argv) {
 		stat(uri_start, &stat_buff);
 		printf("Response File Size: %ldbytes\n", stat_buff.st_size);
 
-		sendfile(cfd, opened_fd, 0, (ssize_t)stat_buff.st_size);
+		sendfile(client_fd, opened_fd, 0, (ssize_t)stat_buff.st_size);
 		close(opened_fd);
-		close(cfd);
+		close(client_fd);
 
 		printf("====================\n");
 		
 	}
 
 	// clean up
-	close(sfd);
+	close(server_fd);
 		
 	printf("Server has exited\n");
 	return 0;
