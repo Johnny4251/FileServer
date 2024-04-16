@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
 	int backlog = 5;
 	int port = 8080;
 
-	char *shared_dir = "resources/";
+	char *resource_dir = "resources/";
 
 	// first argument is optional
 	if (argc > 1) {
@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
 	printf("waiting for requests...\n");
 	// listen for incoming connections
 	while(server_running) {
+		char *shared_dir = resource_dir;
 		listen(server_fd, backlog);
 		client_fd = accept(server_fd, (struct sockaddr*)&sockaddr_info, &sockaddr_len);
 		printf("\n====================\n");
@@ -63,6 +64,7 @@ int main(int argc, char **argv) {
 		
 		// atm GET is the only supported header
 		if (strncmp(req_buff, "GET ", 4) != 0) {
+			printf("Bad Header\n");
 			send_404_response(client_fd);
 			close(client_fd);
 			continue;
@@ -70,20 +72,22 @@ int main(int argc, char **argv) {
 
 		
 		// GET /file.html ...
-		size_t path_len = strlen(req_buff) + strlen(shared_dir);
+		//size_t path_len = strlen(req_buff) + strlen(shared_dir);
 		char *uri_start = req_buff + 5;
 		char *uri_end = strchr(uri_start, ' ');
-		if (!uri_end) {
+		if (!uri_end) { // URL's are end delimitted by a space char
 			send_404_response(client_fd);
 			close(client_fd);
 			continue;
 		}
-		*uri_end = '\0'; // null terminate empty space	
+		*uri_end = '\0'; // null terminate string	
+		
 		
 		// create file_path ptr and concat directory info
 		char* file_path = (char*) malloc(strlen(uri_start));
-		strcat(file_path, shared_dir);	
+		strcpy(file_path, shared_dir);	
 		strcat(file_path, uri_start);
+		printf("REQUESTED FILE: %s\n", file_path);
 		
 		// open file
 		int opened_fd = open(file_path, O_RDONLY);
@@ -98,7 +102,7 @@ int main(int argc, char **argv) {
 		// get file size of file to send
 		struct stat stat_buff;
 		stat(file_path, &stat_buff);
-		printf("Response File Size: %ldbytes\n", stat_buff.st_size);
+		printf("REQUESTED FILE SIZE: %ldbytes\n", stat_buff.st_size);
 
 		sendfile(client_fd, opened_fd, 0, (ssize_t)stat_buff.st_size);
 		close(opened_fd);
