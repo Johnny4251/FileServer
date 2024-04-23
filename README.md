@@ -1,4 +1,4 @@
-# FileServer Project
+# FileServer
 
 ## Building the Project
 To build the project, run:
