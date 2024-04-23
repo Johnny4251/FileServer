@@ -21,6 +21,20 @@
 #include <stdlib.h>
 #include "status_codes.h"
 
+
+// ensure URI is safe
+bool is_safe_uri(const char *uri) {
+    for (const char *p = uri; *p != '\0'; p++) {
+        if (*p == '.' && *(p + 1) == '.') {
+            if ((p == uri || *(p - 1) == '/') && (*(p + 2) == '\0' || *(p + 2) == '/')) {
+                return false;
+            }
+        }
+    }
+    return true;  
+}
+
+
 int main(int argc, char **argv) {
 
 	bool server_running = true;
@@ -92,10 +106,20 @@ int main(int argc, char **argv) {
 		}
 		*uri_end = '\0'; // null terminate string	
 		
+
+		// check uri for path injection
+		if (!is_safe_uri(uri_start)) {
+                    printf("Unsafe URI\n");
+                    send_403_response(client_fd);
+                    close(client_fd);
+                    continue;
+                }
+
 		
 		// create file_path ptr and concat directory info
 		printf("RESPONSE INFORMATION:\n");
-		char* file_path = (char*) malloc(strlen(uri_start));
+		//char* file_path = (char*) malloc(strlen(uri_start));
+		char* file_path = (char*) malloc(strlen(shared_dir) + strlen(uri_start) + 1);
 		strcpy(file_path, shared_dir);	
 		strcat(file_path, uri_start);
 		printf("REQUESTED FILE: %s\n", file_path);

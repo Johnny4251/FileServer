@@ -1,6 +1,7 @@
-gcc webserver.c status_codes.c -o webserver.exe
+gcc webserver.c status_codes.c -o webserver
+gcc client.c -o client
 
-./webserver.exe
+./webserver
 
 
 Files are shared from resource directory
