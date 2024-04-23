@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
 		// get request from user
 		char req_buff[256] = {0};
-		ssize_t recvd = recv(client_fd, (void*)req_buff, sizeof(req_buff), 0);
+		recv(client_fd, (void*)req_buff, sizeof(req_buff), 0);
 		printf("%s", req_buff);
 
 		
