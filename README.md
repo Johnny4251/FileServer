@@ -16,6 +16,7 @@ Files are shared from the resource directory.
 
 ## Download files with Client
 To run the client, execute:
+
 	./client <ip> <port> <uri> <filename>
 
 Files are downloaded as 'filename'
